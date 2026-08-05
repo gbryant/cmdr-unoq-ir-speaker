@@ -1,0 +1,14 @@
+/* Route commander's console to lpuart1 = the QRB bridge UART (-> /dev/ttyHS1).
+ * The board default (usart1) is the Arduino header Serial1 (D0/D1), not the Linux side. */
+/ {
+    chosen {
+        zephyr,console = &lpuart1;
+        zephyr,shell-uart = &lpuart1;
+    };
+
+    /* IR receiver OUT pin — used only when the `ir` module is enabled. Default D5
+     * (arduino_header index 11 = &gpioa 11). Edit to move the pin. */
+    zephyr,user {
+        ir-gpios = <&arduino_header 11 GPIO_ACTIVE_HIGH>;
+    };
+};

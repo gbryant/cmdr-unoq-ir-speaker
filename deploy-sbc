@@ -1,0 +1,29 @@
+#!/bin/bash
+# Deploy this project's SBC-side tools to the Uno Q's Debian home (/home/arduino). These are the
+# scripts that run NEXT TO the broker and read its channel sockets — e.g. the channel IR tools
+# that `cmdr module enable ir` drops into bin/. Re-runnable; run it again after enabling a module
+# that ships SBC tools, or after editing one.
+set -e
+cd "$(dirname "${BASH_SOURCE[0]}")"
+DEST=/home/arduino
+
+if ! ls bin/*.py >/dev/null 2>&1; then
+  echo "nothing in bin/ to deploy — enable a module with SBC tools first (e.g. cmdr module enable ir)."
+  exit 0
+fi
+
+echo "==> pushing tools to $DEST"
+for f in bin/*.py; do
+  adb push "$f" "$DEST/$(basename "$f")" >/dev/null && echo "  $(basename "$f")"
+done
+
+# Seed the map library once — don't clobber maps you've built on the board (pull those back first).
+if [ -d maps ]; then
+  if adb shell "test -d $DEST/maps && echo EXISTS" 2>/dev/null | grep -q EXISTS; then
+    echo "==> $DEST/maps already on the board — left as-is (adb pull new maps before re-seeding)"
+  else
+    adb push maps "$DEST/maps" >/dev/null && echo "==> seeded $DEST/maps"
+  fi
+fi
+
+echo "run them on the board, e.g.:  adb shell 'cd $DEST && python3 ir_lookup.py'"

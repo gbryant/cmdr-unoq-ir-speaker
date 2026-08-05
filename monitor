@@ -1,0 +1,8 @@
+#!/bin/bash
+# The Mac's console is ch0 of the channel bus, carried over the USB-CDC gadget by the
+# broker service. Needs ./install-broker to have been run on the board.
+set -e
+PORT="${1:-$(ls /dev/cu.usbmodem* 2>/dev/null | head -1)}"
+[ -n "$PORT" ] || { echo "no /dev/cu.usbmodem* found — is the board plugged in?"; exit 1; }
+echo "Connecting to $PORT  (Ctrl-T q to quit). Type 'help'."
+tio --baudrate 115200 "$PORT"

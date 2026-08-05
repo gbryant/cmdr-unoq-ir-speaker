@@ -1,0 +1,9 @@
+# credentials — never commit
+secrets.h
+
+# build output
+build/
+build-*/
+.pio/
+managed_components/
+__pycache__/

@@ -1,0 +1,8 @@
+target = "unoq"
+
+[module.ir]
+gpio = 5
+wall = false
+
+[autostart]
+cmd0 = "ir recv"

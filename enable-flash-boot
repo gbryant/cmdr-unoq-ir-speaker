@@ -1,0 +1,38 @@
+#!/bin/bash
+# ONE-TIME, board-modifying: set STM32U585 option bytes so the M33 boots from FLASH
+# (nSWBOOT0=0, nBOOT0=1) instead of its ROM bootloader. Without this, commander never
+# runs. Recoverable: SWD works in any boot mode; revert with ./restore-arduino. Never
+# touches the RDP byte. See docs/zephyr-hal-spike.md.
+set -e
+cd "$(dirname "${BASH_SOURCE[0]}")"
+# Zephyr build env (override any of these for your install):
+source "${ZEPHYR_VENV:-$HOME/zephyrproject/.venv}/bin/activate" 2>/dev/null || true
+export ZEPHYR_BASE="${ZEPHYR_BASE:-$HOME/zephyrproject/zephyr}"
+export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-gnuarmemb}"
+export GNUARMEMB_TOOLCHAIN_PATH="${GNUARMEMB_TOOLCHAIN_PATH:-/Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi}"
+GDB="${GDB:-$GNUARMEMB_TOOLCHAIN_PATH/bin/arm-none-eabi-gdb}"
+adb shell "pkill -f openocd" 2>/dev/null || true
+adb forward tcp:3333 tcp:3333 >/dev/null
+( adb shell arduino-debug >/tmp/cmdr-unoq-debug.log 2>&1 & )
+sleep 6
+CUR=$("$GDB" -batch -ex "target extended-remote localhost:3333" -ex "monitor halt" \
+  -ex 'monitor stm32l4x option_read 0 0x40' 2>/dev/null | grep -oiE '0x[0-9a-f]{8}' | tail -1)
+echo "current FLASH_OPTR = ${CUR:-?}"
+if [ "$CUR" = "0x1beff8aa" ]; then
+  echo "already set to boot from flash — nothing to do."
+else
+  read -p "Write option bytes to boot from flash (0x1beff8aa)? [y/N] " ok
+  if [ "$ok" = "y" ] || [ "$ok" = "Y" ]; then
+    "$GDB" -batch -ex "target extended-remote localhost:3333" -ex "monitor halt" \
+      -ex "monitor stm32l4x unlock 0" \
+      -ex "monitor stm32l4x option_write 0 0x40 0x1beff8aa 0x0c000000" \
+      -ex "monitor stm32l4x option_load 0" -ex quit 2>&1 | grep -iE "written|option" || true
+    sleep 1
+    VTOR=$("$GDB" -batch -ex "target extended-remote localhost:3333" -ex "monitor reset run" \
+      -ex "shell sleep 1" -ex "monitor halt" \
+      -ex 'printf "0x%08x\n", *(unsigned int*)0xE000ED08' 2>/dev/null | grep -oiE '0x08000000|0x0bf90000' | tail -1)
+    echo "VTOR=$VTOR  ($([ "$VTOR" = "0x08000000" ] && echo 'boots commander from flash ✓' || echo 'still bootloader — retry'))"
+  fi
+fi
+adb shell "pkill -f openocd" 2>/dev/null || true
+adb forward --remove tcp:3333 2>/dev/null || true

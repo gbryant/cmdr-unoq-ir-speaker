@@ -1,0 +1,17 @@
+#!/bin/bash
+# Thin shim: the real install-broker logic lives in the commander framework
+# (dev/unoq/install_broker.sh), fetched into build-unoq/ by ./build. This stub just locates
+# and runs it — so the logic updates with the framework (cmdr pull / clean + build) and never
+# goes stale in the project. (Board-modifying + reversible with ./restore-arduino; needs the
+# board sudo password. The impl pushes the broker from the fetched source — no GitHub auth on
+# the board, works for a private repo.)
+set -e
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+IMPL=$(find build-unoq -path '*/dev/unoq/install_broker.sh' 2>/dev/null | head -1)
+if [ -z "$IMPL" ]; then
+  echo "commander framework not fetched yet — run ./build first (it downloads commander via"
+  echo "FetchContent), then re-run ./install-broker."
+  exit 1
+fi
+exec bash "$IMPL" "$@"
