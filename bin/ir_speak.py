@@ -220,13 +220,21 @@ def main():
         print(f"[ir_speak] greeting: {args.greeting}")
         speaker.say(args.greeting)
 
-    announced, armed, prev, last_seen = None, False, None, 0.0
+    # One announcement per press, debounced by TIME rather than by repetition. Announce the
+    # first frame, then ignore every frame until they stop for RELEASE_IDLE — which covers a
+    # held button's repeats, a toggle remote's partner frame, and a stray trailing frame from
+    # the remote you just switched away from, all with one rule.
+    #
+    # The previous rule waited for two consecutive frames that agreed, to drop those strays. It
+    # silently assumed every remote repeats: a Vizio sound bar sends each press exactly ONCE, so
+    # nothing was ever confirmed and it announced nothing at all — no speech, and not even a "?".
+    announced, last_seen = None, 0.0
     try:
         for line in link.latest_events():
             now = time.monotonic()
             if line is None:                       # idle tick — no frame this poll
                 if announced is not None and now - last_seen > RELEASE_IDLE:
-                    armed, prev = True, None        # released — let the same button re-announce
+                    announced = None                # released — arm for the next press
                 continue
             m = IR_RE.search(line)
             if not m or 'Repeat' in line:
@@ -235,17 +243,9 @@ def main():
             command  = m.group(3).lower()
             last_seen = now
             key = (address, command)
-            # Two consecutive frames of the SAME press confirm it — dropping lone stray/trailing
-            # frames when you switch remotes. Compared by press_id, so a toggle-bit remote's
-            # 0x17/0x97 pair counts as one press rather than two strangers that never agree
-            # (which announced nothing at all).
-            confirmed = prev is not None and press_id(key) == press_id(prev)
-            prev = key
-            if not confirmed:
+            if announced is not None:              # still inside the current press — ignore
                 continue
-            if press_id(key) == announced and not armed:   # same button still held
-                continue
-            announced, armed = press_id(key), False        # new (or re-pressed) button
+            announced = press_id(key)
             matches  = lookup(maps, address, command)
             spoke = speaker.say(matches[0][1]['name']) if matches else False
             show(m.group(1), address, command, int(m.group(5)), matches, spoke)
