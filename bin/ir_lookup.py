@@ -44,9 +44,27 @@ def load_maps(maps_dir):
     return maps
 
 
+# Some remotes flip bit 7 of the command between otherwise identical frames (a Hisense Roku sends
+# power as 0x17 then 0x97). Maps store the base form, so try the toggle partner before reporting
+# a stranger — exact first, so a remote genuinely using both codes as separate buttons still
+# resolves each to its own name.
+TOGGLE_BIT = 0x80
+
+
+def base_command(command):
+    return hex(int(command, 16) & ~TOGGLE_BIT)
+
+
 def lookup(maps, address, command):
-    return [(remote, e) for remote, entries in maps.items()
+    hits = [(remote, e) for remote, entries in maps.items()
             for e in entries if e['address'] == address and e['command'] == command]
+    if hits:
+        return hits
+    # Compare with the toggle bit cleared on BOTH sides — a map built by ir_map.py may hold
+    # either form, depending on which frame of the pair it captured.
+    base = base_command(command)
+    return [(remote, e) for remote, entries in maps.items()
+            for e in entries if e['address'] == address and base_command(e['command']) == base]
 
 
 def fmt_match(remote, entry):

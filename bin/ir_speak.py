@@ -90,13 +90,18 @@ def press_id(key):
 
 
 def lookup(maps, address, command):
-    def exact(cmd):
-        return [(remote, e) for remote, entries in maps.items()
-                for e in entries if e['address'] == address and e['command'] == cmd]
-
     # Exact first, so a remote that genuinely uses both 0x17 and 0x97 as separate buttons still
-    # resolves each to its own name; only fall back to the toggle partner when that finds nothing.
-    return exact(command) or exact(base_command(command))
+    # resolves each to its own name.
+    hits = [(remote, e) for remote, entries in maps.items()
+            for e in entries if e['address'] == address and e['command'] == command]
+    if hits:
+        return hits
+    # Otherwise compare with the toggle bit cleared on BOTH sides. The shipped maps store the
+    # base form, but ir_map.py records whichever frame it captured — so a map you build from a
+    # toggle remote may hold 0x97 where the press arrives as 0x17, or the reverse.
+    base = base_command(command)
+    return [(remote, e) for remote, entries in maps.items()
+            for e in entries if e['address'] == address and base_command(e['command']) == base]
 
 
 def fmt_match(remote, entry):
@@ -195,6 +200,11 @@ def main():
     # the broker socket exists. Off unless asked for, so an interactive run stays quiet.
     p.add_argument('--greeting', nargs='?', const='ready', metavar='TEXT',
                    help='speak TEXT once at startup ("ready" if given with no value)')
+    # Every way this tool ignores a frame is silent by design, which is exactly what makes a
+    # non-speaking remote hard to diagnose: you can't tell "the board sent nothing" from "I threw
+    # it away". --debug narrates the discards.
+    p.add_argument('--debug', action='store_true',
+                   help='log every frame that is dropped, and why')
     args = p.parse_args()
 
     maps = load_maps(args.maps)
@@ -228,6 +238,10 @@ def main():
     # The previous rule waited for two consecutive frames that agreed, to drop those strays. It
     # silently assumed every remote repeats: a Vizio sound bar sends each press exactly ONCE, so
     # nothing was ever confirmed and it announced nothing at all — no speech, and not even a "?".
+    def dropped(reason, detail):
+        if args.debug:
+            print(f"  · dropped [{reason}] {detail}", flush=True)
+
     announced, last_seen = None, 0.0
     try:
         for line in link.latest_events():
@@ -237,13 +251,20 @@ def main():
                     announced = None                # released — arm for the next press
                 continue
             m = IR_RE.search(line)
-            if not m or 'Repeat' in line:
+            if not m:
+                dropped("unparsed", line.strip())   # not an IR event line, or a format change
+                continue
+            if 'Repeat' in line:
+                dropped("repeat frame", line.strip())
                 continue
             address  = m.group(2).lower()
             command  = m.group(3).lower()
+            gap = now - last_seen
             last_seen = now
             key = (address, command)
             if announced is not None:              # still inside the current press — ignore
+                dropped("same press", f"{address}/{command}  {gap * 1000:.0f} ms after the last "
+                                      f"frame (announced {announced[0]}/{announced[1]})")
                 continue
             announced = press_id(key)
             matches  = lookup(maps, address, command)
