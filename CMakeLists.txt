@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.20.0)
 # Pull commander before Zephyr initializes — download ONLY (don't process commander's own
 # Pico CMakeLists). SOURCE_SUBDIR=include has no CMakeLists.txt, so MakeAvailable populates
 # the source but skips add_subdirectory (the non-deprecated way to do FetchContent_Populate).
-# Pin GIT_TAG to a release/sha to freeze the framework.
+# GIT_TAG pins a commander release — move it with `cmdr pin <tag>`.
 include(FetchContent)
-FetchContent_Declare(commander GIT_REPOSITORY https://github.com/gbryant/commander.git GIT_TAG main SOURCE_SUBDIR include)
+FetchContent_Declare(commander GIT_REPOSITORY https://github.com/gbryant/commander.git GIT_TAG v1.0 SOURCE_SUBDIR include)
 add_compile_definitions(MAX_COMMANDS=8)
 FetchContent_MakeAvailable(commander)
 set(COMMANDER ${commander_SOURCE_DIR})

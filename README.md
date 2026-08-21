@@ -47,9 +47,10 @@ video; Hisense Roku; Vizio sound bar).
 
 ## Setup
 
-Prereqs on your machine: a Zephyr/`west` checkout (`~/zephyrproject`), the Arm GNU
-Toolchain, and `adb`. Override `ZEPHYR_BASE` / `GNUARMEMB_TOOLCHAIN_PATH` / `GDB` if
-yours live elsewhere.
+Prereqs on your machine: a Zephyr/`west` workspace (commander's `scripts/setup-sdks.sh
+--zephyr` creates `~/u-developer/zephyrproject`; a plain `~/zephyrproject` checkout also
+works), the Arm GNU Toolchain, and `adb`. Override `ZEPHYRPROJECT` / `ZEPHYR_BASE` /
+`GNUARMEMB_TOOLCHAIN_PATH` / `GDB` if yours live elsewhere.
 
 ### 1. Build (also fetches the framework)
 

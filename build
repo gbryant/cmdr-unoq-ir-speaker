@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")"
-# Zephyr build env (override any of these for your install):
-source "${ZEPHYR_VENV:-$HOME/zephyrproject/.venv}/bin/activate" 2>/dev/null || true
-export ZEPHYR_BASE="${ZEPHYR_BASE:-$HOME/zephyrproject/zephyr}"
+# Zephyr build env (override any of these for your install). The default workspace is
+# ~/u-developer/zephyrproject — what commander's setup-sdks.sh --zephyr creates — with
+# a fallback to ~/zephyrproject for a hand-made checkout.
+_ZP="${ZEPHYRPROJECT:-$HOME/u-developer/zephyrproject}"
+[ -d "$_ZP" ] || _ZP="$HOME/zephyrproject"
+source "${ZEPHYR_VENV:-$_ZP/.venv}/bin/activate" 2>/dev/null || true
+export ZEPHYR_BASE="${ZEPHYR_BASE:-$_ZP/zephyr}"
 export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-gnuarmemb}"
 export GNUARMEMB_TOOLCHAIN_PATH="${GNUARMEMB_TOOLCHAIN_PATH:-/Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi}"
 GDB="${GDB:-$GNUARMEMB_TOOLCHAIN_PATH/bin/arm-none-eabi-gdb}"
