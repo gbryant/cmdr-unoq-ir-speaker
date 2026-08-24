@@ -107,10 +107,12 @@ speaking a button costs no model load. Without it `ir_speak.py` falls back to
 `espeak-ng`, and without that it prints only — the fallback is per-utterance, so a
 daemon restart mid-demo just means a few robotic announcements rather than silence.
 
-For audio out, `unoq-tools` also has `setup-bt-audio.py` and `bt.py` for pairing a
-Bluetooth speaker headlessly (`docs/unoq-bluetooth-audio.md` covers the details —
-notably that the stack is PipeWire, and that WirePlumber's bluez seat-monitoring has
-to be disabled for headless operation).
+For audio out, `unoq-tools` has `setup-bt-audio.py` to pair a Bluetooth speaker
+headlessly, and `bt.py` to manage it afterwards. Run `setup-bt-audio.py` once per
+board: headless audio needs a couple of non-obvious WirePlumber fixes and the script
+applies them for you, so there's nothing to configure by hand.
+[unoq-bluetooth-audio.md](https://github.com/gbryant/unoq-tools/blob/main/docs/unoq-bluetooth-audio.md)
+explains what they are, which is worth reading only if something misbehaves.
 
 ### 4. Run it
 
@@ -152,6 +154,10 @@ once without stepping on each other.
 
 ## Background
 
-In the commander repo: `docs/getting-started-unoq.md` (the board track),
-`docs/zephyr-hal-spike.md` (boot fix + flash path), `docs/commander-channels-bringup.md`
-(the bus), `docs/unoq-access.md` (access map), and `dev/unoq/` (the service units).
+All in the [commander](https://github.com/gbryant/commander) repo:
+
+- [getting-started-unoq.md](https://github.com/gbryant/commander/blob/main/docs/getting-started-unoq.md) — bringing a stock board up
+- [zephyr-hal-spike.md](https://github.com/gbryant/commander/blob/main/docs/zephyr-hal-spike.md) — the boot-byte fix and flash path
+- [commander-channels-bringup.md](https://github.com/gbryant/commander/blob/main/docs/commander-channels-bringup.md) — the channel bus
+- [unoq-access.md](https://github.com/gbryant/commander/blob/main/docs/unoq-access.md) — how to reach each of the two brains
+- [dev/unoq/](https://github.com/gbryant/commander/blob/main/dev/unoq) — the Debian-side service units
