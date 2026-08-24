@@ -7,3 +7,14 @@ build-*/
 .pio/
 managed_components/
 __pycache__/
+
+# cmdr-generated scripts — regenerate with `cmdr regen`, don't commit.
+# They're generated from cmdr's templates, so a committed copy goes stale silently.
+/bum
+/build
+/flash
+/monitor
+/enable-flash-boot
+/install-broker
+/restore-arduino
+/deploy-sbc
