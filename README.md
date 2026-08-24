@@ -2,6 +2,16 @@
 
 **Point a remote at the board and it says the button name out loud.**
 
+![A laptop showing a terminal that lists decoded remote presses — hisense_roku:
+up, down, netflix, ok, power — beside a Bluetooth speaker and the Uno Q board,
+with a hand pressing a remote.](docs/img/demo.jpg)
+
+*Each press decodes on the M33, arrives on channel 1, and is spoken aloud through
+the Bluetooth speaker on the right. The terminal is `ir_lookup.py`, a second
+subscriber watching the same channel — it isn't driving anything.*
+**▶ [Watch it with sound](docs/img/demo.mp4)** (10s) — the speech is the point, so
+a still can only get you halfway.
+
 A [commander](https://github.com/gbryant/commander) consumer for the **Arduino Uno Q** —
 and the clearest demonstration of why that board is interesting. The Uno Q has two
 brains: an **STM32U585 (M33)** running commander under Zephyr, and a **QRB2210**
