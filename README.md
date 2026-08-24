@@ -2,15 +2,13 @@
 
 **Point a remote at the board and it says the button name out loud.**
 
-![A laptop showing a terminal that lists decoded remote presses — hisense_roku:
-up, down, netflix, ok, power — beside a Bluetooth speaker and the Uno Q board,
-with a hand pressing a remote.](docs/img/demo.jpg)
+https://github.com/user-attachments/assets/42b36206-2f07-4114-97c8-893174f00c95
 
-*Each press decodes on the M33, arrives on channel 1, and is spoken aloud through
-the Bluetooth speaker on the right. The terminal is `ir_lookup.py`, a second
-subscriber watching the same channel — it isn't driving anything.*
-**▶ [Watch it with sound](docs/img/demo.mp4)** (10s) — the speech is the point, so
-a still can only get you halfway.
+*Turn the sound on — the speech is the point.* Each press is decoded on the M33,
+published on channel 1, and spoken through the Bluetooth speaker on the right.
+The terminal is `ir_lookup.py`, a *second* subscriber on that same channel: it
+prints what it sees and drives nothing. ([Same clip in-repo](docs/img/demo.mp4),
+if the embed doesn't play for you.)
 
 A [commander](https://github.com/gbryant/commander) consumer for the **Arduino Uno Q** —
 and the clearest demonstration of why that board is interesting. The Uno Q has two
@@ -44,6 +42,13 @@ Python, where it's easy to change.
 Press a button on a mapped remote and the board announces it — "volume up", "play",
 "power". Unmapped remotes still print the raw protocol/address/command, which is how
 you build a new map (see below).
+
+![Terminal output from ir_lookup.py: a column of decoded NEC frames, each resolved
+to a name such as hisense_roku : up, netflix, ok and power.](docs/img/demo.jpg)
+
+Every press shows protocol, address, command and bit-width, then the map it matched
+and the button's name. A `?` instead of a `✓` marks a frame that decoded but matched
+no map entry.
 
 `ir_speak.py` handles held buttons the way you'd want: a held button announces **once**
 and re-announces only after you release it. Switching remotes mid-stream doesn't
