@@ -116,13 +116,49 @@ explains what they are, which is worth reading only if something misbehaves.
 
 ### 4. Run it
 
+First push the tools across — this is needed either way:
+
 ```bash
-./deploy-sbc                                            # push bin/ tools + seed maps/ to the board
-adb shell "cd /home/arduino && python3 ir_speak.py"     # press a remote → hear the button name
+./deploy-sbc      # bin/ tools + seed maps/ onto the board
 ```
 
-That's the demo. The board is already streaming IR (autostart), so `ir_speak.py` starts
-nothing — it's a pure subscriber to `ch1.sock`.
+The board is already streaming IR (autostart), so `ir_speak.py` starts nothing — it's a
+pure subscriber to `ch1.sock`. There are two ways to run it, and both are fine.
+
+**By hand**, to see it working right now:
+
+```bash
+adb shell "cd /home/arduino && \
+  XDG_RUNTIME_DIR=/run/user/\$(id -u) \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/\$(id -u)/bus \
+  python3 ir_speak.py"
+```
+
+The environment prefix is **not optional**. A one-shot `adb shell` is neither a login nor
+an interactive shell, so it sources nothing and lands with no audio session — without the
+prefix you'll watch presses decode on screen and hear nothing at all.
+
+**As an appliance**, so it starts itself on power and needs no computer:
+
+```bash
+./deploy-sbc --service "ir_speak.py --greeting"          # install + start at boot
+cd ~/github/unoq-tools && ./bt.py autoconnect on <MAC>   # keep the speaker connected
+```
+
+Both halves are needed, and the second is the one people miss: pairing survives a reboot
+but a *connection* doesn't, so a paired speaker just sits there after a power cycle and
+the board is mute. `--greeting` speaks "ready" once the link is up, which on a device with
+no screen is the only sign it all came back.
+
+```bash
+./deploy-sbc --stop-service ir_speak.py                  # back to starting it by hand
+adb shell 'journalctl --user -u commander-ir_speak -f'   # when it doesn't
+```
+
+It's installed as a **user** unit (these tools need the session bus to reach PipeWire
+audio) with the systemd start limit lifted — the broker is a system service and this is a
+user one, so they race at boot and the default five-restarts-in-ten-seconds would give up
+a second before the socket appears.
 
 ## The other tools
 
