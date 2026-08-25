@@ -186,10 +186,17 @@ boards' maps, so they're interchangeable.
 
 To watch the raw stream: `adb shell "socat - UNIX-CONNECT:/tmp/commander/ch1.sock"`.
 
-To toggle the stream by hand, open a command session on `ch2` and run `ir recv` — the
-consuming tools never touch it, and neither does the human console on ch0. That
-separation is the channel bus's whole point: several processes can talk to the board at
-once without stepping on each other.
+To toggle the stream by hand, run `ir recv` on the ch0 console (`./monitor`) — it's a
+toggle, and it reports the state it moved to. The consuming tools never touch it: they
+only subscribe to ch1, so starting and stopping the stream stays a human decision while
+they keep running. That separation is the channel bus's whole point — several processes
+talk to the board at once without stepping on each other.
+
+The bus defines a third channel for exactly this (`CH_TOOLS = 2`, a non-console command
+session in `include/channel_ids.h`), so a *script* could toggle the stream without
+touching your console. The shipped broker unit doesn't expose it — it runs
+`--channels 0,1`, so only `ch0.sock` and `ch1.sock` exist. Widen that in
+`commander-broker.service` if you want it.
 
 ## Revert to stock Arduino
 
