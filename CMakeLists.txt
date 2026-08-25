@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20.0)
 # the source but skips add_subdirectory (the non-deprecated way to do FetchContent_Populate).
 # GIT_TAG pins a commander release — move it with `cmdr pin <tag>`.
 include(FetchContent)
-FetchContent_Declare(commander GIT_REPOSITORY https://github.com/gbryant/commander.git GIT_TAG v1.0 SOURCE_SUBDIR include)
+FetchContent_Declare(commander GIT_REPOSITORY https://github.com/gbryant/commander.git GIT_TAG v1.1 SOURCE_SUBDIR include)
 add_compile_definitions(MAX_COMMANDS=8)
 FetchContent_MakeAvailable(commander)
 set(COMMANDER ${commander_SOURCE_DIR})
