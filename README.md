@@ -198,6 +198,21 @@ touching your console. The shipped broker unit doesn't expose it — it runs
 `--channels 0,1`, so only `ch0.sock` and `ch1.sock` exist. Widen that in
 `commander-broker.service` if you want it.
 
+## Updating the commander framework
+
+This project pins commander to a release tag (the `GIT_TAG` in `CMakeLists.txt`).
+`cmdr pull` re-fetches that same tag, so on its own it changes nothing — to adopt a
+newer release, **`cmdr pin <tag>` then `cmdr pull`**, then `./build` again.
+`cmdr unpin` floats on `main` instead; `cmdr update` updates the cmdr tool itself.
+
+Worth knowing on this target specifically: the **broker runs from the fetched
+framework**, so moving to a new release and rebuilding also updates what
+`./install-broker` installs — re-run it if a release changes the broker.
+
+> Don't build against a local commander checkout as a normal workflow — it makes this
+> project silently depend on unpublished commander state. (`cmdr link <path>`
+> exists as a deliberate, temporary exception for framework development.)
+
 ## Revert to stock Arduino
 
 ```bash
